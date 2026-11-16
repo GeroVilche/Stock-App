@@ -19,7 +19,26 @@ async function verStock() {
     ORDER BY p.nombre;
   `);
   console.table(resultado.rows);
+}
+
+async function registrarVenta(productoId, cantidad) {
+  await pool.query(
+    `INSERT INTO movimientos (producto_id, tipo, cantidad, nota) VALUES ($1, 'venta', $2, 'Venta desde Node')`,
+    [productoId, cantidad]
+  );
+  console.log(`Venta registrada: producto ${productoId}, cantidad ${cantidad}`);
+}
+
+async function main() {
+  console.log('Stock antes:');
+  await verStock();
+
+  await registrarVenta(1, 2);
+
+  console.log('Stock después:');
+  await verStock();
+
   await pool.end();
 }
 
-verStock();
+main();
