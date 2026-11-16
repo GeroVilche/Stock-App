@@ -21,4 +21,25 @@ async function obtenerStock() {
   return resultado.rows;
 }
 
-module.exports = { pool, obtenerStock };
+async function buscarProducto(productoId) {
+  const resultado = await pool.query('SELECT nombre FROM productos WHERE id = $1', [productoId]);
+  return resultado.rows[0];
+}
+
+async function stockDe(productoId) {
+  const resultado = await pool.query(
+    `SELECT COALESCE(SUM(CASE WHEN tipo = 'venta' THEN -cantidad ELSE cantidad END), 0)::int AS stock
+     FROM movimientos WHERE producto_id = $1`,
+    [productoId]
+  );
+  return resultado.rows[0].stock;
+}
+
+async function registrarVenta(productoId, cantidad) {
+  await pool.query(
+    `INSERT INTO movimientos (producto_id, tipo, cantidad, nota) VALUES ($1, 'venta', $2, 'Venta desde el servidor')`,
+    [productoId, cantidad]
+  );
+}
+
+module.exports = { pool, obtenerStock, buscarProducto, stockDe, registrarVenta };
