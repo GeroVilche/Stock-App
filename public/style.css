@@ -24,3 +24,35 @@ th, td {
 th {
   background: #fafafa;
 }
+
+h2 {
+  margin-top: 2rem;
+}
+form {
+  display: flex;
+  gap: 0.5rem;
+}
+select, input, button {
+  padding: 0.6rem;
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+select {
+  flex: 1;
+}
+input {
+  width: 80px;
+}
+button {
+  background: #7f1d1d;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+.ok {
+  color: #15803d;
+}
+.error {
+  color: #b91c1c;
+}

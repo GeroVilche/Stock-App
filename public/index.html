@@ -19,6 +19,14 @@
       </thead>
       <tbody id="tabla-stock"></tbody>
     </table>
+
+    <h2>Registrar venta</h2>
+    <form id="form-venta">
+      <select id="producto" required></select>
+      <input type="number" id="cantidad" min="1" value="1" required>
+      <button type="submit">Vender</button>
+    </form>
+    <p id="mensaje"></p>
   </main>
   <script src="app.js"></script>
 </body>
