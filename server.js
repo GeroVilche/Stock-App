@@ -5,6 +5,7 @@ const app = express();
 const PUERTO = 3000;
 
 app.use(express.json());
+app.use(express.static('public'));
 
 app.get('/stock', async (req, res) => {
   try {
