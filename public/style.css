@@ -83,3 +83,19 @@ button {
   flex: 1;
   min-width: 140px;
 }
+
+.tipo {
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: white;
+}
+.tipo-venta {
+  background: #7f1d1d;
+}
+.tipo-entrada {
+  background: #166534;
+}
+.tipo-ajuste {
+  background: #52525b;
+}

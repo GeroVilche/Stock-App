@@ -1,5 +1,5 @@
 const express = require('express');
-const { obtenerStock, buscarProducto, stockDe, registrarVenta, registrarEntrada, crearProducto } = require('./db');
+const { obtenerStock, buscarProducto, stockDe, registrarVenta, registrarEntrada, crearProducto, obtenerMovimientos } = require('./db');
 
 const app = express();
 const PUERTO = 3000;
@@ -17,6 +17,15 @@ app.get('/stock', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'No se pudo obtener el stock' });
+  }
+});
+
+app.get('/movimientos', async (req, res) => {
+  try {
+    res.json(await obtenerMovimientos());
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'No se pudieron obtener los movimientos' });
   }
 });
 

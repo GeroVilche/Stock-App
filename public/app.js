@@ -42,6 +42,7 @@ async function cargarStock() {
 
   llenarSelect(selectVenta, productos);
   llenarSelect(selectEntrada, productos);
+  cargarMovimientos();
 }
 
 async function enviarMovimiento(ruta, select, inputCantidad, mensaje) {
@@ -106,5 +107,27 @@ formProducto.addEventListener('submit', async (evento) => {
 
   cargarStock();
 });
+
+const tablaMovimientos = document.getElementById('tabla-movimientos');
+
+async function cargarMovimientos() {
+  const respuesta = await fetch('/movimientos');
+  const movimientos = await respuesta.json();
+
+  tablaMovimientos.innerHTML = '';
+  for (const movimiento of movimientos) {
+    const fecha = new Date(movimiento.fecha).toLocaleString('es-AR', {
+      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+    });
+    const fila = document.createElement('tr');
+    fila.innerHTML = `
+      <td>${fecha}</td>
+      <td>${movimiento.nombre}</td>
+      <td><span class="tipo tipo-${movimiento.tipo}">${movimiento.tipo}</span></td>
+      <td>${movimiento.cantidad}</td>
+    `;
+    tablaMovimientos.appendChild(fila);
+  }
+}
 
 cargarStock();

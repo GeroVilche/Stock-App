@@ -58,4 +58,16 @@ async function crearProducto(nombre, categoria, precioVenta, stockMinimo) {
   return resultado.rows[0].id;
 }
 
-module.exports = { pool, obtenerStock, buscarProducto, stockDe, registrarVenta, registrarEntrada, crearProducto };
+async function obtenerMovimientos(limite = 15) {
+  const resultado = await pool.query(
+    `SELECT m.id, m.fecha, p.nombre, m.tipo, m.cantidad, m.nota
+     FROM movimientos m
+     JOIN productos p ON p.id = m.producto_id
+     ORDER BY m.fecha DESC, m.id DESC
+     LIMIT $1`,
+    [limite]
+  );
+  return resultado.rows;
+}
+
+module.exports = { pool, obtenerStock, buscarProducto, stockDe, registrarVenta, registrarEntrada, crearProducto, obtenerMovimientos };
