@@ -2,8 +2,29 @@ const express = require('express');
 const { obtenerStock, buscarProducto, stockDe, registrarVenta, registrarEntrada, crearProducto, obtenerMovimientos } = require('./db');
 
 const app = express();
-const PUERTO = 3000;
+const PUERTO = process.env.PORT || 3000;
 
+if (!process.env.ADMIN_USER || !process.env.ADMIN_PASSWORD) {
+  console.error('Faltan ADMIN_USER y ADMIN_PASSWORD en las variables de entorno');
+  process.exit(1);
+}
+
+function requerirLogin(req, res, next) {
+  const [tipo, valor] = (req.headers.authorization || '').split(' ');
+  if (tipo === 'Basic' && valor) {
+    const texto = Buffer.from(valor, 'base64').toString();
+    const separador = texto.indexOf(':');
+    const usuario = texto.slice(0, separador);
+    const clave = texto.slice(separador + 1);
+    if (usuario === process.env.ADMIN_USER && clave === process.env.ADMIN_PASSWORD) {
+      return next();
+    }
+  }
+  res.set('WWW-Authenticate', 'Basic realm="Stock"');
+  res.status(401).send('Necesitás usuario y contraseña para entrar.');
+}
+
+app.use(requerirLogin);
 app.use(express.json());
 app.use(express.static('public'));
 
