@@ -1,16 +1,32 @@
 const tabla = document.getElementById('tabla-stock');
-const selectProducto = document.getElementById('producto');
-const inputCantidad = document.getElementById('cantidad');
+
 const formVenta = document.getElementById('form-venta');
-const mensaje = document.getElementById('mensaje');
+const selectVenta = document.getElementById('producto');
+const cantidadVenta = document.getElementById('cantidad');
+const mensajeVenta = document.getElementById('mensaje');
+
+const formEntrada = document.getElementById('form-entrada');
+const selectEntrada = document.getElementById('producto-entrada');
+const cantidadEntrada = document.getElementById('cantidad-entrada');
+const mensajeEntrada = document.getElementById('mensaje-entrada');
+
+function llenarSelect(select, productos) {
+  const elegido = select.value;
+  select.innerHTML = '';
+  for (const producto of productos) {
+    const opcion = document.createElement('option');
+    opcion.value = producto.id;
+    opcion.textContent = `${producto.nombre} (hay ${producto.stock})`;
+    select.appendChild(opcion);
+  }
+  if (elegido) select.value = elegido;
+}
 
 async function cargarStock() {
   const respuesta = await fetch('/stock');
   const productos = await respuesta.json();
 
   tabla.innerHTML = '';
-  selectProducto.innerHTML = '';
-
   for (const producto of productos) {
     const fila = document.createElement('tr');
     fila.innerHTML = `
@@ -19,22 +35,18 @@ async function cargarStock() {
       <td>${producto.stock}</td>
     `;
     tabla.appendChild(fila);
-
-    const opcion = document.createElement('option');
-    opcion.value = producto.id;
-    opcion.textContent = `${producto.nombre} (hay ${producto.stock})`;
-    selectProducto.appendChild(opcion);
   }
+
+  llenarSelect(selectVenta, productos);
+  llenarSelect(selectEntrada, productos);
 }
 
-formVenta.addEventListener('submit', async (evento) => {
-  evento.preventDefault();
-
-  const respuesta = await fetch('/ventas', {
+async function enviarMovimiento(ruta, select, inputCantidad, mensaje) {
+  const respuesta = await fetch(ruta, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      productoId: Number(selectProducto.value),
+      productoId: Number(select.value),
       cantidad: Number(inputCantidad.value),
     }),
   });
@@ -50,6 +62,16 @@ formVenta.addEventListener('submit', async (evento) => {
   }
 
   cargarStock();
+}
+
+formVenta.addEventListener('submit', (evento) => {
+  evento.preventDefault();
+  enviarMovimiento('/ventas', selectVenta, cantidadVenta, mensajeVenta);
+});
+
+formEntrada.addEventListener('submit', (evento) => {
+  evento.preventDefault();
+  enviarMovimiento('/entradas', selectEntrada, cantidadEntrada, mensajeEntrada);
 });
 
 cargarStock();

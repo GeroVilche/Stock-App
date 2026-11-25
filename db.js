@@ -42,4 +42,11 @@ async function registrarVenta(productoId, cantidad) {
   );
 }
 
-module.exports = { pool, obtenerStock, buscarProducto, stockDe, registrarVenta };
+async function registrarEntrada(productoId, cantidad) {
+  await pool.query(
+    `INSERT INTO movimientos (producto_id, tipo, cantidad, nota) VALUES ($1, 'entrada', $2, 'Entrada desde la página')`,
+    [productoId, cantidad]
+  );
+}
+
+module.exports = { pool, obtenerStock, buscarProducto, stockDe, registrarVenta, registrarEntrada };
