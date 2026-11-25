@@ -11,11 +11,11 @@ const pool = new Pool({
 
 async function obtenerStock() {
   const resultado = await pool.query(`
-    SELECT p.id, p.nombre,
+    SELECT p.id, p.nombre, p.stock_minimo,
            SUM(CASE WHEN m.tipo = 'venta' THEN -m.cantidad ELSE m.cantidad END)::int AS stock
     FROM productos p
     JOIN movimientos m ON m.producto_id = p.id
-    GROUP BY p.id, p.nombre
+    GROUP BY p.id, p.nombre, p.stock_minimo
     ORDER BY p.id;
   `);
   return resultado.rows;

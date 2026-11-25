@@ -60,3 +60,16 @@ button {
 .btn-entrada {
   background: #166534;
 }
+
+.stock-bajo td {
+  background: #fef2f2;
+  color: #991b1b;
+}
+.aviso {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: #b91c1c;
+  color: white;
+  font-size: 0.75rem;
+}

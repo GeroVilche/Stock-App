@@ -28,11 +28,14 @@ async function cargarStock() {
 
   tabla.innerHTML = '';
   for (const producto of productos) {
-    const fila = document.createElement('tr');
+        const fila = document.createElement('tr');
+    const stockBajo = producto.stock < producto.stock_minimo;
+    if (stockBajo) fila.classList.add('stock-bajo');
     fila.innerHTML = `
       <td>${producto.id}</td>
       <td>${producto.nombre}</td>
-      <td>${producto.stock}</td>
+      <td>${producto.stock}${stockBajo ? ' <span class="aviso">Reponer</span>' : ''}</td>
+      <td>${producto.stock_minimo}</td>
     `;
     tabla.appendChild(fila);
   }
