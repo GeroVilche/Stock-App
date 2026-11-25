@@ -50,6 +50,7 @@ button {
   border: none;
   cursor: pointer;
 }
+
 .ok {
   color: #15803d;
 }
@@ -65,6 +66,7 @@ button {
   background: #fef2f2;
   color: #991b1b;
 }
+
 .aviso {
   margin-left: 0.5rem;
   padding: 0.1rem 0.5rem;
@@ -72,4 +74,12 @@ button {
   background: #b91c1c;
   color: white;
   font-size: 0.75rem;
+}
+
+.form-producto {
+  flex-wrap: wrap;
+}
+.form-producto input {
+  flex: 1;
+  min-width: 140px;
 }

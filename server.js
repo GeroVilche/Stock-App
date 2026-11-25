@@ -1,11 +1,15 @@
 const express = require('express');
-const { obtenerStock, buscarProducto, stockDe, registrarVenta, registrarEntrada } = require('./db');
+const { obtenerStock, buscarProducto, stockDe, registrarVenta, registrarEntrada, crearProducto } = require('./db');
 
 const app = express();
 const PUERTO = 3000;
 
 app.use(express.json());
 app.use(express.static('public'));
+
+function datosValidos(productoId, cantidad) {
+  return Number.isInteger(productoId) && Number.isInteger(cantidad) && cantidad > 0;
+}
 
 app.get('/stock', async (req, res) => {
   try {
@@ -20,8 +24,7 @@ app.post('/ventas', async (req, res) => {
   try {
     const productoId = Number(req.body.productoId);
     const cantidad = Number(req.body.cantidad);
-
-    if (!Number.isInteger(productoId) || !Number.isInteger(cantidad) || cantidad <= 0) {
+    if (!datosValidos(productoId, cantidad)) {
       return res.status(400).json({ error: 'productoId y cantidad tienen que ser números enteros mayores a 0' });
     }
 
@@ -47,8 +50,7 @@ app.post('/entradas', async (req, res) => {
   try {
     const productoId = Number(req.body.productoId);
     const cantidad = Number(req.body.cantidad);
-
-    if (!Number.isInteger(productoId) || !Number.isInteger(cantidad) || cantidad <= 0) {
+    if (!datosValidos(productoId, cantidad)) {
       return res.status(400).json({ error: 'productoId y cantidad tienen que ser números enteros mayores a 0' });
     }
 
@@ -63,6 +65,31 @@ app.post('/entradas', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'No se pudo registrar la entrada' });
+  }
+});
+
+app.post('/productos', async (req, res) => {
+  try {
+    const nombre = String(req.body.nombre || '').trim();
+    const categoria = String(req.body.categoria || '').trim() || null;
+    const precioVenta = Number(req.body.precioVenta);
+    const stockMinimo = Number(req.body.stockMinimo);
+
+    if (nombre.length < 2 || nombre.length > 120) {
+      return res.status(400).json({ error: 'El nombre tiene que tener entre 2 y 120 caracteres' });
+    }
+    if (!(precioVenta > 0)) {
+      return res.status(400).json({ error: 'El precio tiene que ser mayor a 0' });
+    }
+    if (!Number.isInteger(stockMinimo) || stockMinimo < 0) {
+      return res.status(400).json({ error: 'El mínimo tiene que ser un número entero de 0 o más' });
+    }
+
+    const id = await crearProducto(nombre, categoria, precioVenta, stockMinimo);
+    res.status(201).json({ mensaje: `Producto creado: ${nombre} (id ${id})` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'No se pudo crear el producto' });
   }
 });
 

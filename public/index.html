@@ -35,6 +35,15 @@
       <button type="submit" class="btn-entrada">Cargar</button>
     </form>
     <p id="mensaje-entrada"></p>
+    <h2>Nuevo producto</h2>
+    <form id="form-producto" class="form-producto">
+      <input type="text" id="nuevo-nombre" placeholder="Nombre (ej: Rosado 750ml)" required>
+      <input type="text" id="nuevo-categoria" placeholder="Categoría (ej: Rosados)">
+      <input type="number" id="nuevo-precio" placeholder="Precio" min="1" step="0.01" required>
+      <input type="number" id="nuevo-minimo" placeholder="Mínimo" min="0" value="0" required>
+      <button type="submit">Crear</button>
+    </form>
+    <p id="mensaje-producto"></p>
   </main>
   <script src="app.js"></script>
 </body>

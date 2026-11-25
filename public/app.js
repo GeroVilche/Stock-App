@@ -77,4 +77,34 @@ formEntrada.addEventListener('submit', (evento) => {
   enviarMovimiento('/entradas', selectEntrada, cantidadEntrada, mensajeEntrada);
 });
 
+const formProducto = document.getElementById('form-producto');
+const mensajeProducto = document.getElementById('mensaje-producto');
+
+formProducto.addEventListener('submit', async (evento) => {
+  evento.preventDefault();
+
+  const respuesta = await fetch('/productos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      nombre: document.getElementById('nuevo-nombre').value,
+      categoria: document.getElementById('nuevo-categoria').value,
+      precioVenta: Number(document.getElementById('nuevo-precio').value),
+      stockMinimo: Number(document.getElementById('nuevo-minimo').value),
+    }),
+  });
+  const datos = await respuesta.json();
+
+  if (respuesta.ok) {
+    mensajeProducto.textContent = datos.mensaje;
+    mensajeProducto.className = 'ok';
+    formProducto.reset();
+  } else {
+    mensajeProducto.textContent = datos.error;
+    mensajeProducto.className = 'error';
+  }
+
+  cargarStock();
+});
+
 cargarStock();

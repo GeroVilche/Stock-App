@@ -12,9 +12,9 @@ const pool = new Pool({
 async function obtenerStock() {
   const resultado = await pool.query(`
     SELECT p.id, p.nombre, p.stock_minimo,
-           SUM(CASE WHEN m.tipo = 'venta' THEN -m.cantidad ELSE m.cantidad END)::int AS stock
+           COALESCE(SUM(CASE WHEN m.tipo = 'venta' THEN -m.cantidad ELSE m.cantidad END), 0)::int AS stock
     FROM productos p
-    JOIN movimientos m ON m.producto_id = p.id
+    LEFT JOIN movimientos m ON m.producto_id = p.id
     GROUP BY p.id, p.nombre, p.stock_minimo
     ORDER BY p.id;
   `);
@@ -37,7 +37,7 @@ async function stockDe(productoId) {
 
 async function registrarVenta(productoId, cantidad) {
   await pool.query(
-    `INSERT INTO movimientos (producto_id, tipo, cantidad, nota) VALUES ($1, 'venta', $2, 'Venta desde el servidor')`,
+    `INSERT INTO movimientos (producto_id, tipo, cantidad, nota) VALUES ($1, 'venta', $2, 'Venta desde la página')`,
     [productoId, cantidad]
   );
 }
@@ -49,4 +49,13 @@ async function registrarEntrada(productoId, cantidad) {
   );
 }
 
-module.exports = { pool, obtenerStock, buscarProducto, stockDe, registrarVenta, registrarEntrada };
+async function crearProducto(nombre, categoria, precioVenta, stockMinimo) {
+  const resultado = await pool.query(
+    `INSERT INTO productos (negocio_id, nombre, categoria, precio_venta, stock_minimo)
+     VALUES (1, $1, $2, $3, $4) RETURNING id`,
+    [nombre, categoria, precioVenta, stockMinimo]
+  );
+  return resultado.rows[0].id;
+}
+
+module.exports = { pool, obtenerStock, buscarProducto, stockDe, registrarVenta, registrarEntrada, crearProducto };
