@@ -24,6 +24,10 @@ function llenarSelect(select, productos) {
 
 async function cargarStock() {
   const respuesta = await fetch('/stock');
+    if (respuesta.status === 401) {
+    window.location.href = '/login';
+    return;
+  }
   const productos = await respuesta.json();
 
   tabla.innerHTML = '';
@@ -129,5 +133,10 @@ async function cargarMovimientos() {
     tablaMovimientos.appendChild(fila);
   }
 }
+
+document.getElementById('btn-salir').addEventListener('click', async () => {
+  await fetch('/logout', { method: 'POST' });
+  window.location.href = '/login';
+});
 
 cargarStock();

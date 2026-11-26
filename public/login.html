@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ingresar - Stock</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="pagina-login">
+  <main class="tarjeta-login">
+    <h1>Stock</h1>
+    <p class="subtitulo">Ingresá para administrar tu negocio</p>
+    <form id="form-login">
+      <label for="usuario">Usuario</label>
+      <input type="text" id="usuario" autocomplete="username" required>
+      <label for="clave">Contraseña</label>
+      <input type="password" id="clave" autocomplete="current-password" required>
+      <button type="submit">Ingresar</button>
+    </form>
+    <p id="mensaje-login" class="error"></p>
+  </main>
+  <script>
+    document.getElementById('form-login').addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      const respuesta = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usuario: document.getElementById('usuario').value,
+          clave: document.getElementById('clave').value,
+        }),
+      });
+      if (respuesta.ok) {
+        window.location.href = '/';
+      } else {
+        const datos = await respuesta.json();
+        document.getElementById('mensaje-login').textContent = datos.error;
+      }
+    });
+  </script>
+</body>
+</html>
