@@ -3,8 +3,8 @@ const path = require('path');
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const {
-  obtenerStock, buscarProducto, stockDe, registrarVenta,
-  registrarEntrada, crearProducto, obtenerMovimientos,
+  obtenerNegocio, obtenerStock, obtenerResumen, obtenerVentasPorDia, obtenerMovimientos,
+  buscarProducto, stockDe, registrarVenta, registrarEntrada, crearProducto,
 } = require('./db');
 
 const app = express();
@@ -36,15 +36,16 @@ function crearToken(usuario) {
   return `${datos}.${firmar(datos)}`;
 }
 
-function tokenValido(token) {
-  if (!token) return false;
+// Devuelve los datos de la sesión si el token es válido, o null si no.
+function leerSesion(token) {
+  if (!token) return null;
   const [datos, firma] = token.split('.');
-  if (!datos || !firma || !iguales(firma, firmar(datos))) return false;
+  if (!datos || !firma || !iguales(firma, firmar(datos))) return null;
   try {
-    const { vence } = JSON.parse(Buffer.from(datos, 'base64url').toString());
-    return Date.now() < vence;
+    const sesion = JSON.parse(Buffer.from(datos, 'base64url').toString());
+    return Date.now() < sesion.vence ? sesion : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -65,7 +66,7 @@ const limiteLogin = rateLimit({
 // ---------- Rutas públicas (no piden login) ----------
 
 app.get('/login', (req, res) => {
-  if (tokenValido(leerCookie(req, 'sesion'))) return res.redirect('/');
+  if (leerSesion(leerCookie(req, 'sesion'))) return res.redirect('/');
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
@@ -95,7 +96,11 @@ app.post('/logout', (req, res) => {
 // ---------- De acá para abajo, todo pide login ----------
 
 function requerirLogin(req, res, next) {
-  if (tokenValido(leerCookie(req, 'sesion'))) return next();
+  const sesion = leerSesion(leerCookie(req, 'sesion'));
+  if (sesion) {
+    req.usuario = sesion.usuario;
+    return next();
+  }
   if (req.method === 'GET' && (req.path === '/' || req.path.endsWith('.html'))) {
     return res.redirect('/login');
   }
@@ -109,89 +114,103 @@ function datosValidos(productoId, cantidad) {
   return Number.isInteger(productoId) && Number.isInteger(cantidad) && cantidad > 0;
 }
 
-app.get('/stock', async (req, res) => {
-  try {
-    res.json(await obtenerStock());
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'No se pudo obtener el stock' });
-  }
-});
+// Convierte un parámetro de la URL en un número entero dentro de un rango.
+function entreLimites(valor, minimo, maximo, porDefecto) {
+  const numero = Number.parseInt(valor, 10);
+  if (Number.isNaN(numero)) return porDefecto;
+  return Math.min(Math.max(numero, minimo), maximo);
+}
 
-app.get('/movimientos', async (req, res) => {
-  try {
-    res.json(await obtenerMovimientos());
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'No se pudieron obtener los movimientos' });
-  }
-});
+// Envuelve una ruta para que cualquier error responda 500 con un mensaje claro.
+function ruta(mensajeError, manejador) {
+  return async (req, res) => {
+    try {
+      await manejador(req, res);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: mensajeError });
+    }
+  };
+}
 
-app.post('/ventas', async (req, res) => {
-  try {
-    const productoId = Number(req.body.productoId);
-    const cantidad = Number(req.body.cantidad);
-    if (!datosValidos(productoId, cantidad)) {
-      return res.status(400).json({ error: 'productoId y cantidad tienen que ser números enteros mayores a 0' });
-    }
-    const producto = await buscarProducto(productoId);
-    if (!producto) {
-      return res.status(404).json({ error: `No existe un producto con id ${productoId}` });
-    }
-    const disponible = await stockDe(productoId);
-    if (cantidad > disponible) {
-      return res.status(409).json({ error: `No hay stock suficiente de ${producto.nombre}: hay ${disponible}` });
-    }
-    await registrarVenta(productoId, cantidad);
-    res.status(201).json({ mensaje: `Venta registrada: ${cantidad} x ${producto.nombre}`, quedan: disponible - cantidad });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'No se pudo registrar la venta' });
-  }
-});
+app.get('/negocio', ruta('No se pudo obtener el negocio', async (req, res) => {
+  const negocio = await obtenerNegocio();
+  res.json({
+    nombre: negocio?.nombre || 'Mi negocio',
+    ciudad: negocio?.ciudad || '',
+    usuario: req.usuario,
+  });
+}));
 
-app.post('/entradas', async (req, res) => {
-  try {
-    const productoId = Number(req.body.productoId);
-    const cantidad = Number(req.body.cantidad);
-    if (!datosValidos(productoId, cantidad)) {
-      return res.status(400).json({ error: 'productoId y cantidad tienen que ser números enteros mayores a 0' });
-    }
-    const producto = await buscarProducto(productoId);
-    if (!producto) {
-      return res.status(404).json({ error: `No existe un producto con id ${productoId}` });
-    }
-    await registrarEntrada(productoId, cantidad);
-    const ahora = await stockDe(productoId);
-    res.status(201).json({ mensaje: `Entrada registrada: ${cantidad} x ${producto.nombre}`, quedan: ahora });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'No se pudo registrar la entrada' });
-  }
-});
+app.get('/stock', ruta('No se pudo obtener el stock', async (req, res) => {
+  res.json(await obtenerStock());
+}));
 
-app.post('/productos', async (req, res) => {
-  try {
-    const nombre = String(req.body.nombre || '').trim();
-    const categoria = String(req.body.categoria || '').trim() || null;
-    const precioVenta = Number(req.body.precioVenta);
-    const stockMinimo = Number(req.body.stockMinimo);
-    if (nombre.length < 2 || nombre.length > 120) {
-      return res.status(400).json({ error: 'El nombre tiene que tener entre 2 y 120 caracteres' });
-    }
-    if (!(precioVenta > 0)) {
-      return res.status(400).json({ error: 'El precio tiene que ser mayor a 0' });
-    }
-    if (!Number.isInteger(stockMinimo) || stockMinimo < 0) {
-      return res.status(400).json({ error: 'El mínimo tiene que ser un número entero de 0 o más' });
-    }
-    const id = await crearProducto(nombre, categoria, precioVenta, stockMinimo);
-    res.status(201).json({ mensaje: `Producto creado: ${nombre} (id ${id})` });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'No se pudo crear el producto' });
+app.get('/resumen', ruta('No se pudo obtener el resumen', async (req, res) => {
+  res.json(await obtenerResumen());
+}));
+
+app.get('/ventas-por-dia', ruta('No se pudieron obtener las ventas por día', async (req, res) => {
+  res.json(await obtenerVentasPorDia(entreLimites(req.query.dias, 1, 60, 14)));
+}));
+
+app.get('/movimientos', ruta('No se pudieron obtener los movimientos', async (req, res) => {
+  res.json(await obtenerMovimientos(entreLimites(req.query.limite, 1, 200, 15)));
+}));
+
+app.post('/ventas', ruta('No se pudo registrar la venta', async (req, res) => {
+  const productoId = Number(req.body.productoId);
+  const cantidad = Number(req.body.cantidad);
+  if (!datosValidos(productoId, cantidad)) {
+    return res.status(400).json({ error: 'Elegí un producto y una cantidad mayor a 0' });
   }
-});
+  const producto = await buscarProducto(productoId);
+  if (!producto) {
+    return res.status(404).json({ error: `No existe un producto con id ${productoId}` });
+  }
+  const disponible = await stockDe(productoId);
+  if (cantidad > disponible) {
+    return res.status(409).json({ error: `No hay stock suficiente de ${producto.nombre}: hay ${disponible}` });
+  }
+  await registrarVenta(productoId, cantidad);
+  res.status(201).json({ mensaje: `Venta registrada: ${cantidad} x ${producto.nombre}`, quedan: disponible - cantidad });
+}));
+
+app.post('/entradas', ruta('No se pudo registrar la entrada', async (req, res) => {
+  const productoId = Number(req.body.productoId);
+  const cantidad = Number(req.body.cantidad);
+  if (!datosValidos(productoId, cantidad)) {
+    return res.status(400).json({ error: 'Elegí un producto y una cantidad mayor a 0' });
+  }
+  const producto = await buscarProducto(productoId);
+  if (!producto) {
+    return res.status(404).json({ error: `No existe un producto con id ${productoId}` });
+  }
+  await registrarEntrada(productoId, cantidad);
+  const ahora = await stockDe(productoId);
+  res.status(201).json({ mensaje: `Mercadería cargada: ${cantidad} x ${producto.nombre}`, quedan: ahora });
+}));
+
+app.post('/productos', ruta('No se pudo crear el producto', async (req, res) => {
+  const nombre = String(req.body.nombre || '').trim();
+  const categoria = String(req.body.categoria || '').trim() || null;
+  const precioVenta = Number(req.body.precioVenta);
+  const stockMinimo = Number(req.body.stockMinimo);
+  if (nombre.length < 2 || nombre.length > 120) {
+    return res.status(400).json({ error: 'El nombre tiene que tener entre 2 y 120 caracteres' });
+  }
+  if (categoria && categoria.length > 60) {
+    return res.status(400).json({ error: 'La categoría puede tener hasta 60 caracteres' });
+  }
+  if (!(precioVenta > 0)) {
+    return res.status(400).json({ error: 'El precio tiene que ser mayor a 0' });
+  }
+  if (!Number.isInteger(stockMinimo) || stockMinimo < 0) {
+    return res.status(400).json({ error: 'El mínimo tiene que ser un número entero de 0 o más' });
+  }
+  const id = await crearProducto(nombre, categoria, precioVenta, stockMinimo);
+  res.status(201).json({ mensaje: `Producto creado: ${nombre}`, id });
+}));
 
 app.listen(PUERTO, () => {
   console.log(`Servidor prendido en http://localhost:${PUERTO}`);

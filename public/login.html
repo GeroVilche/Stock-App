@@ -3,39 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ingresar - Stock</title>
+  <title>Ingresar al control de stock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Spectral:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="pagina-login">
   <main class="tarjeta-login">
-    <h1>Stock</h1>
-    <p class="subtitulo">Ingresá para administrar tu negocio</p>
+    <span class="marca-sello" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3h8l-.6 6.2a3.4 3.4 0 0 1-6.8 0L8 3Z"/><path d="M12 13v7M8.5 21h7"/></svg>
+    </span>
+    <h1>Control de stock</h1>
+    <p class="subtitulo">Ingresá para ver y cargar el stock de tu negocio.</p>
     <form id="form-login">
       <label for="usuario">Usuario</label>
       <input type="text" id="usuario" autocomplete="username" required>
       <label for="clave">Contraseña</label>
       <input type="password" id="clave" autocomplete="current-password" required>
-      <button type="submit">Ingresar</button>
+      <button type="submit" class="btn btn-vino">Ingresar</button>
     </form>
-    <p id="mensaje-login" class="error"></p>
+    <p id="mensaje-login" class="error" role="alert"></p>
   </main>
   <script>
-    document.getElementById('form-login').addEventListener('submit', async (evento) => {
+    const formulario = document.getElementById('form-login');
+    formulario.addEventListener('submit', async (evento) => {
       evento.preventDefault();
-      const respuesta = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          usuario: document.getElementById('usuario').value,
-          clave: document.getElementById('clave').value,
-        }),
-      });
-      if (respuesta.ok) {
-        window.location.href = '/';
-      } else {
-        const datos = await respuesta.json();
-        document.getElementById('mensaje-login').textContent = datos.error;
+      const boton = formulario.querySelector('button');
+      boton.disabled = true;
+      try {
+        const respuesta = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usuario: document.getElementById('usuario').value,
+            clave: document.getElementById('clave').value,
+          }),
+        });
+        if (respuesta.ok) {
+          window.location.href = '/';
+          return;
+        }
+        const datos = await respuesta.json().catch(() => ({}));
+        document.getElementById('mensaje-login').textContent = datos.error || 'No se pudo ingresar. Probá de nuevo.';
+      } catch {
+        document.getElementById('mensaje-login').textContent = 'No hay conexión con el servidor. Probá de nuevo en unos segundos.';
       }
+      boton.disabled = false;
     });
   </script>
 </body>

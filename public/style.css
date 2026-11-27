@@ -1,128 +1,606 @@
-body {
-  font-family: system-ui, sans-serif;
-  background: #f4f4f5;
-  margin: 0;
-  padding: 2rem;
-}
-main {
-  max-width: 700px;
-  margin: 0 auto;
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-th, td {
-  text-align: left;
-  padding: 0.6rem;
-  border-bottom: 1px solid #e4e4e7;
-}
-th {
-  background: #fafafa;
+/* =========================================================
+   Paleta "Bodega". Para adaptar el sistema a otro negocio,
+   alcanza con cambiar estas variables.
+   ========================================================= */
+:root {
+  --lateral: #2a1118;          /* barra lateral: bordó casi negro */
+  --lateral-texto: #ecdfe0;
+  --lateral-apagado: #a88b91;
+  --lateral-activo: #3d1a23;
+  --papel: #f3edee;            /* fondo general */
+  --superficie: #fffdfc;       /* paneles */
+  --tinta: #26191c;            /* texto principal */
+  --apagado: #7b676b;          /* texto secundario */
+  --linea: #e7dcdd;
+  --vino: #7a1f2e;             /* ventas, alertas, botón principal */
+  --vino-suave: #ecd6da;
+  --botella: #3e6a4b;          /* stock que está bien, entradas */
+  --botella-suave: #deebe1;
+  --laton: #b08a3f;            /* la marca del mínimo */
+  --fuente-titulos: 'Spectral', Georgia, serif;
+  --fuente-texto: 'Instrument Sans', system-ui, sans-serif;
 }
 
-h2 {
-  margin-top: 2rem;
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--fuente-texto);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--tinta);
+  background: var(--papel);
+  -webkit-font-smoothing: antialiased;
 }
-form {
+
+h1, h2 { margin: 0; font-weight: 600; }
+
+button, input, select { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--laton);
+  outline-offset: 2px;
+}
+
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Estructura ---------- */
+
+.app {
+  display: grid;
+  grid-template-columns: 236px 1fr;
+  min-height: 100vh;
+}
+
+.lateral {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1.5rem 1rem;
+  background: var(--lateral);
+  color: var(--lateral-texto);
 }
-select, input, button {
-  padding: 0.6rem;
-  border: 1px solid #d4d4d8;
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.5rem;
+}
+.marca strong {
+  display: block;
+  font-family: var(--fuente-titulos);
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+.marca span:not(.marca-sello) {
+  font-size: 0.8rem;
+  color: var(--lateral-apagado);
+}
+.marca-sello {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 1px solid var(--laton);
+  border-radius: 50%;
+  color: var(--laton);
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.75rem;
   border-radius: 8px;
-  font-size: 1rem;
+  color: var(--lateral-apagado);
+  text-decoration: none;
+  font-weight: 500;
 }
-select {
-  flex: 1;
+.menu a:hover { color: var(--lateral-texto); }
+.menu a[aria-current="page"] {
+  background: var(--lateral-activo);
+  color: var(--lateral-texto);
+  box-shadow: inset 2px 0 0 var(--laton);
 }
-input {
-  width: 80px;
-}
-button {
-  background: #7f1d1d;
+.contador {
+  margin-left: auto;
+  min-width: 1.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--vino);
   color: white;
-  border: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.usuario {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 0.5rem 0;
+  border-top: 1px solid var(--lateral-activo);
+}
+.usuario strong { display: block; font-size: 0.9rem; }
+.usuario span:not(.avatar) { font-size: 0.75rem; color: var(--lateral-apagado); }
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--lateral-activo);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.btn-salir {
+  margin-left: auto;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--lateral-activo);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--lateral-apagado);
+  font-size: 0.8rem;
   cursor: pointer;
 }
+.btn-salir:hover { color: var(--lateral-texto); border-color: var(--lateral-apagado); }
 
-.ok {
-  color: #15803d;
-}
-.error {
-  color: #b91c1c;
-}
-
-.btn-entrada {
-  background: #166534;
+.contenido {
+  min-width: 0;
+  padding: 1.75rem 2rem 3rem;
 }
 
-.stock-bajo td {
-  background: #fef2f2;
-  color: #991b1b;
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.barra h1 {
+  font-family: var(--fuente-titulos);
+  font-size: 2.1rem;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.fecha {
+  margin: 0.25rem 0 0;
+  color: var(--apagado);
+}
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
 }
 
-.aviso {
-  margin-left: 0.5rem;
-  padding: 0.1rem 0.5rem;
-  border-radius: 999px;
-  background: #b91c1c;
-  color: white;
+.buscador {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.6rem 0 0.75rem;
+  height: 40px;
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+  background: var(--superficie);
+  color: var(--apagado);
+}
+.buscador:focus-within { border-color: var(--laton); }
+.buscador input {
+  width: 13rem;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--tinta);
+}
+.buscador kbd {
+  padding: 0 0.35rem;
+  border: 1px solid var(--linea);
+  border-radius: 4px;
+  font-family: inherit;
   font-size: 0.75rem;
 }
 
-.form-producto {
-  flex-wrap: wrap;
+/* ---------- Botones ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 1rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
 }
-.form-producto input {
-  flex: 1;
-  min-width: 140px;
+.btn:disabled { opacity: 0.6; cursor: wait; }
+.btn-vino { background: var(--vino); color: white; }
+.btn-vino:hover { background: #651826; }
+.btn-botella { background: var(--botella); color: white; }
+.btn-botella:hover { background: #33593e; }
+.btn-claro { background: var(--superficie); border-color: var(--linea); color: var(--tinta); }
+.btn-claro:hover { border-color: var(--apagado); }
+.btn-chico { height: 32px; padding: 0 0.75rem; font-size: 0.85rem; }
+
+/* ---------- Indicadores ---------- */
+
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  background: var(--superficie);
+}
+.indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 1.1rem 1.25rem;
+}
+.indicador + .indicador { border-left: 1px solid var(--linea); }
+.indicador-nombre { color: var(--apagado); font-size: 0.85rem; }
+.indicador-valor {
+  font-family: var(--fuente-titulos);
+  font-size: 2rem;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.indicador-valor.es-alerta { color: var(--vino); }
+.indicador-detalle { color: var(--apagado); font-size: 0.8rem; }
+
+/* ---------- Paneles ---------- */
+
+.grilla-resumen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 1.25rem;
+  align-items: start;
+}
+.columna-principal, .columna-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
 }
 
-.tipo {
-  padding: 0.1rem 0.6rem;
-  border-radius: 999px;
+.panel {
+  padding: 1.25rem;
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  background: var(--superficie);
+}
+.panel-tabla { padding-bottom: 0.25rem; }
+.panel-angosto { max-width: 640px; }
+.panel-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.panel-cabecera h2 { font-size: 1rem; }
+.panel-nota { color: var(--apagado); font-size: 0.85rem; }
+.panel-enlace { color: var(--vino); font-size: 0.85rem; font-weight: 500; text-decoration: none; }
+.panel-enlace:hover { text-decoration: underline; }
+.panel-texto { margin: -0.5rem 0 1rem; color: var(--apagado); max-width: 60ch; }
+
+/* ---------- Gráfico de ventas ---------- */
+
+.grafico {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 0.4rem;
+  height: 180px;
+}
+.dia {
+  display: grid;
+  grid-template-rows: 1.2rem 1fr 1.4rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--apagado);
+}
+.dia-columna {
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--linea);
+}
+.dia-barra {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: var(--vino-suave);
+}
+.dia-etiqueta { padding-top: 0.3rem; font-variant-numeric: tabular-nums; }
+.dia.es-hoy .dia-barra { background: var(--vino); }
+.dia.es-hoy .dia-etiqueta, .dia.es-hoy .dia-valor { color: var(--vino); font-weight: 600; }
+
+/* ---------- Pestañas ---------- */
+
+.pestanas {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0 -1.25rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--linea);
+  overflow-x: auto;
+}
+.pestanas button {
+  padding: 0.55rem 0.6rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--apagado);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pestanas button span { font-size: 0.75rem; }
+.pestanas button[aria-selected="true"] { color: var(--tinta); border-bottom-color: var(--vino); }
+
+/* ---------- Tablas ---------- */
+
+.tabla-desplazable { margin: 0 -1.25rem; overflow-x: auto; }
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+.tabla th {
+  padding: 0.7rem 1.25rem;
+  text-align: left;
   font-size: 0.8rem;
-  color: white;
+  font-weight: 500;
+  color: var(--apagado);
+  border-bottom: 1px solid var(--linea);
 }
-.tipo-venta {
-  background: #7f1d1d;
+.tabla td {
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--linea);
+  vertical-align: middle;
 }
-.tipo-entrada {
-  background: #166534;
+.tabla tbody tr:last-child td { border-bottom: none; }
+.tabla .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sub { display: block; color: var(--apagado); font-size: 0.8rem; }
+.fila-baja { background: #fbf3f4; }
+.vacio { padding: 1.5rem 1.25rem; color: var(--apagado); text-align: center; list-style: none; }
+
+/* El nivel de la botella: el detalle distintivo del sistema. */
+.stock {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 190px;
 }
-.tipo-ajuste {
-  background: #52525b;
+.stock-cantidad {
+  width: 2.5rem;
+  text-align: right;
+  font-family: var(--fuente-titulos);
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
 }
+.nivel {
+  position: relative;
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: #efe5e6;
+}
+.nivel-lleno {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--botella);
+}
+.nivel.es-bajo .nivel-lleno { background: var(--vino); }
+.nivel-minimo {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--laton);
+}
+
+.estado {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.estado-ok { background: var(--botella-suave); color: var(--botella); }
+.estado-bajo { background: var(--vino-suave); color: var(--vino); }
+
+.tipo {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.tipo-venta { background: var(--vino-suave); color: var(--vino); }
+.tipo-entrada { background: var(--botella-suave); color: var(--botella); }
+.tipo-ajuste { background: #ece8e4; color: var(--apagado); }
+.fecha-celda { white-space: nowrap; }
+.nota { color: var(--apagado); font-size: 0.85rem; }
+
+/* ---------- Listas laterales ---------- */
+
+.lista { margin: 0; padding: 0; list-style: none; }
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--linea);
+}
+.item:first-child { border-top: none; padding-top: 0; }
+.item-texto { flex: 1; min-width: 0; }
+.item-texto strong { display: block; font-weight: 500; }
+.mov-icono {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.mov-icono.sube { background: var(--botella-suave); color: var(--botella); }
+.mov-icono.baja { background: var(--vino-suave); color: var(--vino); }
+.mov-cantidad { font-weight: 600; font-variant-numeric: tabular-nums; }
+.mov-cantidad.sube { color: var(--botella); }
+.mov-cantidad.baja { color: var(--vino); }
+
+/* ---------- Ventanas (dialog) ---------- */
+
+.dialogo {
+  width: min(420px, 92vw);
+  padding: 1.5rem;
+  border: none;
+  border-radius: 14px;
+  background: var(--superficie);
+  color: var(--tinta);
+}
+.dialogo::backdrop { background: rgba(42, 17, 24, 0.5); }
+.dialogo[open] { animation: aparecer 160ms ease-out; }
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.dialogo h2 {
+  margin-bottom: 1.25rem;
+  font-family: var(--fuente-titulos);
+  font-size: 1.5rem;
+}
+.dialogo label, .pagina-login label {
+  display: block;
+  margin: 0.9rem 0 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.dialogo input, .dialogo select, .pagina-login input {
+  width: 100%;
+  height: 42px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+  background: white;
+}
+.dialogo input:focus, .dialogo select:focus, .pagina-login input:focus {
+  outline: none;
+  border-color: var(--laton);
+  box-shadow: 0 0 0 3px rgba(176, 138, 63, 0.2);
+}
+.dos-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.dialogo-error { min-height: 1.3rem; margin: 0.75rem 0 0; color: var(--vino); font-size: 0.85rem; }
+.dialogo-botones { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.75rem; }
+
+/* ---------- Aviso flotante ---------- */
+
+.aviso {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  max-width: 360px;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  border-left: 3px solid var(--botella);
+  background: var(--lateral);
+  color: var(--lateral-texto);
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 200ms, transform 200ms;
+}
+.aviso.es-error { border-left-color: #d0485c; }
+.aviso.visible { opacity: 1; transform: none; }
+
+/* ---------- Login ---------- */
 
 .pagina-login {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  box-sizing: border-box;
+  padding: 1.5rem;
+  background: var(--lateral);
 }
 .tarjeta-login {
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
+  padding: 2rem;
+  border-radius: 16px;
+  background: var(--superficie);
 }
-.tarjeta-login form {
-  flex-direction: column;
+.tarjeta-login .marca-sello { margin-bottom: 1.25rem; }
+.tarjeta-login h1 {
+  font-family: var(--fuente-titulos);
+  font-size: 1.9rem;
+  line-height: 1.15;
 }
-.subtitulo {
-  color: #71717a;
-  margin-top: -0.5rem;
+.subtitulo { margin: 0.35rem 0 0.5rem; color: var(--apagado); }
+.tarjeta-login .btn { width: 100%; margin-top: 1.25rem; height: 44px; }
+.tarjeta-login .error { min-height: 1.3rem; margin: 0.75rem 0 0; color: var(--vino); font-size: 0.85rem; }
+
+/* ---------- Pantallas más chicas ---------- */
+
+@media (max-width: 1100px) {
+  .grilla-resumen { grid-template-columns: 1fr; }
+  .indicadores { grid-template-columns: repeat(2, 1fr); }
+  .indicador:nth-child(3) { border-left: none; }
+  .indicador:nth-child(n + 3) { border-top: 1px solid var(--linea); }
 }
-.encabezado {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; }
+  .lateral {
+    position: sticky;
+    z-index: 5;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+  .marca span:not(.marca-sello) { display: none; }
+  .usuario { margin: 0 0 0 auto; padding: 0; border: none; }
+  .usuario div, .avatar { display: none; }
+  .menu { order: 3; flex-direction: row; width: 100%; overflow-x: auto; }
+  .menu a { padding: 0.45rem 0.65rem; white-space: nowrap; }
+  .contenido { padding: 1.25rem 1rem 3rem; }
+  .barra h1 { font-size: 1.7rem; }
+  .acciones, .buscador { width: 100%; }
+  .buscador input { width: 100%; }
+  .buscador kbd { display: none; }
+  .acciones .btn { flex: 1; }
+  .grafico { gap: 0.2rem; height: 150px; }
+  .dia-valor { font-size: 0.65rem; }
 }
-.btn-salir {
-  background: #e4e4e7;
-  color: #18181b;
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogo[open] { animation: none; }
+  .aviso { transition: none; }
 }
