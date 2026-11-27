@@ -10,21 +10,62 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="pagina-login">
-  <main class="tarjeta-login">
-    <span class="marca-sello" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3h8l-.6 6.2a3.4 3.4 0 0 1-6.8 0L8 3Z"/><path d="M12 13v7M8.5 21h7"/></svg>
-    </span>
-    <h1>Control de stock</h1>
-    <p class="subtitulo">Ingresá para ver y cargar el stock de tu negocio.</p>
-    <form id="form-login">
-      <label for="usuario">Usuario</label>
-      <input type="text" id="usuario" autocomplete="username" required>
-      <label for="clave">Contraseña</label>
-      <input type="password" id="clave" autocomplete="current-password" required>
-      <button type="submit" class="btn btn-vino">Ingresar</button>
-    </form>
-    <p id="mensaje-login" class="error" role="alert"></p>
+  <section class="login-escena" aria-hidden="true">
+    <svg class="botellas" viewBox="0 0 420 290" role="presentation">
+      <defs>
+        <path id="forma-botella" d="M24 0h12v52c0 12 18 20 18 40v138a10 10 0 0 1-10 10H16A10 10 0 0 1 6 230V92c0-20 18-28 18-40Z"/>
+        <clipPath id="recorte-botella"><use href="#forma-botella"/></clipPath>
+      </defs>
+
+      <!-- Cada botella: el vino (recortado con la forma), el vidrio y la marca del mínimo -->
+      <g transform="translate(10 50)">
+        <g clip-path="url(#recorte-botella)"><rect class="vino" x="0" y="0" width="60" height="240" style="--nivel:.78;--demora:0ms"/></g>
+        <use href="#forma-botella" class="vidrio"/>
+        <line class="minimo" x1="0" x2="60" y1="168" y2="168"/>
+      </g>
+      <g transform="translate(92 20) scale(1.12)">
+        <g clip-path="url(#recorte-botella)"><rect class="vino" x="0" y="0" width="60" height="240" style="--nivel:.46;--demora:120ms"/></g>
+        <use href="#forma-botella" class="vidrio"/>
+        <line class="minimo" x1="0" x2="60" y1="176" y2="176"/>
+      </g>
+      <g transform="translate(184 40) scale(1.04)">
+        <g clip-path="url(#recorte-botella)"><rect class="vino es-bajo" x="0" y="0" width="60" height="240" style="--nivel:.16;--demora:240ms"/></g>
+        <use href="#forma-botella" class="vidrio"/>
+        <line class="minimo es-bajo" x1="0" x2="60" y1="172" y2="172"/>
+      </g>
+      <g transform="translate(272 26) scale(1.08)">
+        <g clip-path="url(#recorte-botella)"><rect class="vino" x="0" y="0" width="60" height="240" style="--nivel:.88;--demora:360ms"/></g>
+        <use href="#forma-botella" class="vidrio"/>
+        <line class="minimo" x1="0" x2="60" y1="170" y2="170"/>
+      </g>
+      <g transform="translate(356 56) scale(.96)">
+        <g clip-path="url(#recorte-botella)"><rect class="vino" x="0" y="0" width="60" height="240" style="--nivel:.6;--demora:480ms"/></g>
+        <use href="#forma-botella" class="vidrio"/>
+        <line class="minimo" x1="0" x2="60" y1="168" y2="168"/>
+      </g>
+      <line class="estante" x1="0" x2="420" y1="289" y2="289"/>
+    </svg>
+    <p class="escena-texto">Sabé qué tenés, qué vendiste y qué hay que reponer, desde cualquier lado.</p>
+  </section>
+
+  <main class="login-formulario">
+    <div class="login-caja">
+      <span class="marca-sello" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3h8l-.6 6.2a3.4 3.4 0 0 1-6.8 0L8 3Z"/><path d="M12 13v7M8.5 21h7"/></svg>
+      </span>
+      <h1>Control de stock</h1>
+      <p class="subtitulo">Ingresá con tu usuario para ver y cargar el stock de tu negocio.</p>
+      <form id="form-login">
+        <label for="usuario">Usuario</label>
+        <input type="text" id="usuario" autocomplete="username" required>
+        <label for="clave">Contraseña</label>
+        <input type="password" id="clave" autocomplete="current-password" required>
+        <button type="submit" class="btn btn-vino">Ingresar</button>
+      </form>
+      <p id="mensaje-login" class="error" role="alert"></p>
+    </div>
   </main>
+
   <script>
     const formulario = document.getElementById('form-login');
     formulario.addEventListener('submit', async (evento) => {
