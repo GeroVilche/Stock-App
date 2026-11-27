@@ -378,6 +378,10 @@ async function iniciar() {
     document.title = `Stock de ${negocio.nombre}`;
     $('#nombre-usuario').textContent = negocio.usuario;
     $('#avatar').textContent = negocio.usuario.slice(0, 2).toUpperCase();
+    if (negocio.demo) {
+      $('#banda-demo').hidden = false;
+      $('#rol-usuario').textContent = 'Modo demo';
+    }
     await cargarTodo();
   } catch (error) {
     avisar(error.message, true);

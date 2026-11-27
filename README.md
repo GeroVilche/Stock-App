@@ -5,7 +5,7 @@ Sistema web para que un comercio chico sepa en todo momento **qué tiene, qué v
 Está armado con datos de una vinoteca de ejemplo, pero el diseño y el código están pensados para adaptarse a otros rubros.
 
 **Demo:** [stock-app-ssrj.onrender.com](https://stock-app-ssrj.onrender.com)
-La demo está protegida con usuario y contraseña. Si querés probarla, escribime y te paso un acceso.
+Tocá **"Probar la demo"** en la pantalla de ingreso: se crea una vinoteca de prueba solo para vos, con dos semanas de ventas cargadas. Podés vender, cargar mercadería y crear productos; todo se borra al salir.
 Corre en el plan gratuito de Render, así que la primera carga puede tardar unos 30 segundos mientras el servidor se despierta.
 
 ![Resumen del sistema](docs/resumen.png)
@@ -20,6 +20,7 @@ Corre en el plan gratuito de Render, así que la primera carga puede tardar unos
 - **Historial de movimientos** con filtros por tipo (ventas, entradas, ajustes) y buscador.
 - **Alta de productos** con categoría, precio y stock mínimo.
 - **Login propio** con sesiones y límite de intentos.
+- **Demo pública aislada:** cada visitante recibe su propio negocio temporal, que se borra al salir o a las pocas horas, sin tocar los datos reales.
 
 | | |
 |---|---|

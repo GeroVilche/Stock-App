@@ -4,7 +4,9 @@
 CREATE TABLE negocios (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL,
-  ciudad VARCHAR(60)
+  ciudad VARCHAR(60),
+  es_demo BOOLEAN NOT NULL DEFAULT false,   -- true = vinoteca temporal de la demo pública
+  creado TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE productos (

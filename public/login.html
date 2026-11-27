@@ -63,6 +63,10 @@
         <button type="submit" class="btn btn-vino">Ingresar</button>
       </form>
       <p id="mensaje-login" class="error" role="alert"></p>
+      <div class="demo-acceso">
+        <p>¿Querés ver cómo funciona? Entrá a una vinoteca de prueba y tocá lo que quieras: los cambios se borran al salir.</p>
+        <button type="button" class="btn btn-claro" id="btn-demo">Probar la demo</button>
+      </div>
     </div>
   </main>
 
@@ -91,6 +95,25 @@
         document.getElementById('mensaje-login').textContent = 'No hay conexión con el servidor. Probá de nuevo en unos segundos.';
       }
       boton.disabled = false;
+    });
+
+    const botonDemo = document.getElementById('btn-demo');
+    botonDemo.addEventListener('click', async () => {
+      botonDemo.disabled = true;
+      botonDemo.textContent = 'Preparando la demo…';
+      try {
+        const respuesta = await fetch('/demo', { method: 'POST' });
+        if (respuesta.ok) {
+          window.location.href = '/';
+          return;
+        }
+        const datos = await respuesta.json().catch(() => ({}));
+        document.getElementById('mensaje-login').textContent = datos.error || 'No se pudo abrir la demo. Probá de nuevo.';
+      } catch {
+        document.getElementById('mensaje-login').textContent = 'No hay conexión con el servidor. Probá de nuevo en unos segundos.';
+      }
+      botonDemo.disabled = false;
+      botonDemo.textContent = 'Probar la demo';
     });
   </script>
 </body>

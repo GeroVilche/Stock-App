@@ -5,11 +5,14 @@ const rateLimit = require('express-rate-limit');
 const {
   obtenerNegocio, obtenerStock, obtenerResumen, obtenerVentasPorDia, obtenerMovimientos,
   buscarProducto, stockDe, registrarVenta, registrarEntrada, crearProducto,
+  crearNegocioDemo, borrarNegocioDemo, borrarDemosViejas,
 } = require('./db');
 
 const app = express();
 const PUERTO = process.env.PORT || 3000;
 const DURACION_SESION_MS = 7 * 24 * 60 * 60 * 1000;
+const DURACION_DEMO_MS = 2 * 60 * 60 * 1000;
+const NEGOCIO_PRINCIPAL = Number(process.env.NEGOCIO_ID || 1);
 
 if (!process.env.ADMIN_USER || !process.env.ADMIN_PASSWORD || !process.env.SESSION_SECRET) {
   console.error('Faltan ADMIN_USER, ADMIN_PASSWORD o SESSION_SECRET en las variables de entorno');
@@ -31,9 +34,19 @@ function iguales(a, b) {
   return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
 }
 
-function crearToken(usuario) {
-  const datos = Buffer.from(JSON.stringify({ usuario, vence: Date.now() + DURACION_SESION_MS })).toString('base64url');
+// La "pulsera de entrada": quién es, qué negocio ve, si es demo y hasta cuándo vale.
+function crearToken(sesion, duracionMs) {
+  const datos = Buffer.from(JSON.stringify({ ...sesion, vence: Date.now() + duracionMs })).toString('base64url');
   return `${datos}.${firmar(datos)}`;
+}
+
+function guardarSesion(req, res, sesion, duracionMs) {
+  res.cookie('sesion', crearToken(sesion, duracionMs), {
+    httpOnly: true,
+    secure: req.secure,
+    sameSite: 'lax',
+    maxAge: duracionMs,
+  });
 }
 
 // Devuelve los datos de la sesión si el token es válido, o null si no.
@@ -63,6 +76,13 @@ const limiteLogin = rateLimit({
   message: { error: 'Demasiados intentos. Probá de nuevo en 15 minutos.' },
 });
 
+// Cada demo crea datos en la base: limitamos cuántas puede abrir una misma persona.
+const limiteDemo = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 15,
+  message: { error: 'Abriste muchas demos seguidas. Probá de nuevo en un rato.' },
+});
+
 // ---------- Rutas públicas (no piden login) ----------
 
 app.get('/login', (req, res) => {
@@ -79,16 +99,27 @@ app.post('/login', limiteLogin, (req, res) => {
   if (!iguales(usuario, process.env.ADMIN_USER) || !iguales(clave, process.env.ADMIN_PASSWORD)) {
     return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
   }
-  res.cookie('sesion', crearToken(usuario), {
-    httpOnly: true,
-    secure: req.secure,
-    sameSite: 'lax',
-    maxAge: DURACION_SESION_MS,
-  });
+  guardarSesion(req, res, { usuario, negocioId: NEGOCIO_PRINCIPAL, demo: false }, DURACION_SESION_MS);
   res.json({ ok: true });
 });
 
-app.post('/logout', (req, res) => {
+// Demo pública: cada visitante recibe su propia vinoteca de prueba, que se borra al salir.
+app.post('/demo', limiteDemo, async (req, res) => {
+  try {
+    const negocioId = await crearNegocioDemo();
+    guardarSesion(req, res, { usuario: 'Visitante', negocioId, demo: true }, DURACION_DEMO_MS);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'No se pudo abrir la demo. Probá de nuevo en unos segundos.' });
+  }
+});
+
+app.post('/logout', async (req, res) => {
+  const sesion = leerSesion(leerCookie(req, 'sesion'));
+  if (sesion?.demo) {
+    await borrarNegocioDemo(sesion.negocioId).catch((error) => console.error(error));
+  }
   res.clearCookie('sesion');
   res.json({ ok: true });
 });
@@ -99,6 +130,8 @@ function requerirLogin(req, res, next) {
   const sesion = leerSesion(leerCookie(req, 'sesion'));
   if (sesion) {
     req.usuario = sesion.usuario;
+    req.demo = Boolean(sesion.demo);
+    req.negocioId = sesion.negocioId ?? NEGOCIO_PRINCIPAL;
     return next();
   }
   if (req.method === 'GET' && (req.path === '/' || req.path.endsWith('.html'))) {
@@ -134,28 +167,29 @@ function ruta(mensajeError, manejador) {
 }
 
 app.get('/negocio', ruta('No se pudo obtener el negocio', async (req, res) => {
-  const negocio = await obtenerNegocio();
+  const negocio = await obtenerNegocio(req.negocioId);
   res.json({
     nombre: negocio?.nombre || 'Mi negocio',
     ciudad: negocio?.ciudad || '',
     usuario: req.usuario,
+    demo: req.demo,
   });
 }));
 
 app.get('/stock', ruta('No se pudo obtener el stock', async (req, res) => {
-  res.json(await obtenerStock());
+  res.json(await obtenerStock(req.negocioId));
 }));
 
 app.get('/resumen', ruta('No se pudo obtener el resumen', async (req, res) => {
-  res.json(await obtenerResumen());
+  res.json(await obtenerResumen(req.negocioId));
 }));
 
 app.get('/ventas-por-dia', ruta('No se pudieron obtener las ventas por día', async (req, res) => {
-  res.json(await obtenerVentasPorDia(entreLimites(req.query.dias, 1, 60, 14)));
+  res.json(await obtenerVentasPorDia(req.negocioId, entreLimites(req.query.dias, 1, 60, 14)));
 }));
 
 app.get('/movimientos', ruta('No se pudieron obtener los movimientos', async (req, res) => {
-  res.json(await obtenerMovimientos(entreLimites(req.query.limite, 1, 200, 15)));
+  res.json(await obtenerMovimientos(req.negocioId, entreLimites(req.query.limite, 1, 200, 15)));
 }));
 
 app.post('/ventas', ruta('No se pudo registrar la venta', async (req, res) => {
@@ -164,7 +198,7 @@ app.post('/ventas', ruta('No se pudo registrar la venta', async (req, res) => {
   if (!datosValidos(productoId, cantidad)) {
     return res.status(400).json({ error: 'Elegí un producto y una cantidad mayor a 0' });
   }
-  const producto = await buscarProducto(productoId);
+  const producto = await buscarProducto(req.negocioId, productoId);
   if (!producto) {
     return res.status(404).json({ error: `No existe un producto con id ${productoId}` });
   }
@@ -182,7 +216,7 @@ app.post('/entradas', ruta('No se pudo registrar la entrada', async (req, res) =
   if (!datosValidos(productoId, cantidad)) {
     return res.status(400).json({ error: 'Elegí un producto y una cantidad mayor a 0' });
   }
-  const producto = await buscarProducto(productoId);
+  const producto = await buscarProducto(req.negocioId, productoId);
   if (!producto) {
     return res.status(404).json({ error: `No existe un producto con id ${productoId}` });
   }
@@ -208,9 +242,21 @@ app.post('/productos', ruta('No se pudo crear el producto', async (req, res) => 
   if (!Number.isInteger(stockMinimo) || stockMinimo < 0) {
     return res.status(400).json({ error: 'El mínimo tiene que ser un número entero de 0 o más' });
   }
-  const id = await crearProducto(nombre, categoria, precioVenta, stockMinimo);
+  const id = await crearProducto(req.negocioId, nombre, categoria, precioVenta, stockMinimo);
   res.status(201).json({ mensaje: `Producto creado: ${nombre}`, id });
 }));
+
+// Cada media hora se borran las demos de más de 3 horas (por si alguien cerró sin tocar Salir).
+async function limpiarDemos() {
+  try {
+    const borradas = await borrarDemosViejas(3);
+    if (borradas) console.log(`Demos viejas borradas: ${borradas}`);
+  } catch (error) {
+    console.error('No se pudieron limpiar las demos:', error.message);
+  }
+}
+limpiarDemos();
+setInterval(limpiarDemos, 30 * 60 * 1000);
 
 app.listen(PUERTO, () => {
   console.log(`Servidor prendido en http://localhost:${PUERTO}`);
